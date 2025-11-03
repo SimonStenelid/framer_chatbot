@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.local
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (not needed in container)
+README.md
+BACKEND_SETUP.md
+*.md
+
+# Frontend files (not needed in backend container)
+framer-widget/
+
+# Development files
+test_api.py
+*.log
+*.sqlite
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml

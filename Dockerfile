@@ -1,21 +1,41 @@
-# Use Python 3.11 as the base image (slim version for smaller size)
+# Production-ready Dockerfile for AI Chatbot Backend
 FROM python:3.11-slim
 
-# Set the working directory inside the container to /app
+# Set working directory
 WORKDIR /app
 
-# Copy the requirements file first (this helps with Docker caching)
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=7860
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first (for Docker cache)
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy all files from your project to the container
-COPY . .
+# Copy application files
+COPY app.py .
+COPY me/ ./me/
+COPY assets/ ./assets/
 
-# Expose port 7860 (Hugging Face Spaces uses this port)
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Expose port
 EXPOSE 7860
 
-# Command to run when the container starts
-# Using gunicorn (production-ready web server) instead of Flask's dev server
-CMD ["gunicorn", "-b", "0.0.0.0:7860", "--timeout", "120", "app:app"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:7860/api/health')"
+
+# Run with gunicorn
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120 --access-logfile - --error-logfile - app:app

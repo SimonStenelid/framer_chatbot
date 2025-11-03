@@ -5,6 +5,7 @@ import os
 import requests
 from pypdf import PdfReader
 from flask import Flask, render_template_string, request, jsonify, session, send_file
+from flask_cors import CORS
 
 load_dotenv(override=True)
 
@@ -171,8 +172,30 @@ Now engage with the user as {self.name}."""
 
 
 app = Flask(__name__)
-app.secret_key = os.getenv(
-    "FLASK_SECRET_KEY", "your-secret-key-here-change-in-production")
+
+# Security: Generate a secure secret key if not provided
+secret_key = os.getenv("FLASK_SECRET_KEY")
+if not secret_key:
+    import secrets
+    secret_key = secrets.token_hex(32)
+    print("WARNING: Using auto-generated secret key. Set FLASK_SECRET_KEY in production!", flush=True)
+app.secret_key = secret_key
+
+# Configure CORS
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*")
+if allowed_origins != "*":
+    allowed_origins = [origin.strip() for origin in allowed_origins.split(",")]
+
+CORS(app,
+     resources={r"/api/*": {"origins": allowed_origins}},
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "OPTIONS"])
+
+# Production settings
+if os.getenv("FLASK_ENV") == "production":
+    app.config['DEBUG'] = False
+    app.config['TESTING'] = False
 
 # Initialize chatbot
 me = Me()
@@ -742,12 +765,76 @@ HTML_TEMPLATE = """
 
 @app.route('/')
 def index():
+    """Render the standalone chat interface (optional - for testing)"""
     return render_template_string(HTML_TEMPLATE)
+
+
+# API Endpoints for Framer widget
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint to verify API is running"""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'AI Chatbot API',
+        'version': '1.0.0'
+    }), 200
+
+
+@app.route('/api/profile-image')
+def api_profile_image():
+    """Get the profile image for the chatbot avatar"""
+    try:
+        return send_file('assets/profile.PNG', mimetype='image/png')
+    except FileNotFoundError:
+        return jsonify({'error': 'Profile image not found'}), 404
 
 
 @app.route('/profile-image')
 def profile_image():
+    """Legacy endpoint - kept for backward compatibility"""
     return send_file('assets/profile.PNG', mimetype='image/png')
+
+
+@app.route('/api/chat', methods=['POST'])
+def api_chat():
+    """API endpoint for chat - to be used by Framer widget"""
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+
+        user_message = data.get('message', '')
+        history = data.get('history', [])
+
+        if not user_message:
+            return jsonify({'error': 'No message provided'}), 400
+
+        # Convert frontend history format to OpenAI format
+        formatted_history = []
+        for msg in history:
+            formatted_history.append(msg)
+
+        # Get response from chatbot
+        response_text = me.chat(user_message, formatted_history)
+
+        # Update history
+        formatted_history.append({"role": "user", "content": user_message})
+        formatted_history.append(
+            {"role": "assistant", "content": response_text})
+
+        return jsonify({
+            'response': response_text,
+            'history': formatted_history,
+            'success': True
+        }), 200
+
+    except Exception as e:
+        print(f"Error in chat endpoint: {str(e)}", flush=True)
+        return jsonify({
+            'error': 'An error occurred processing your request',
+            'success': False
+        }), 500
 
 
 @app.route('/chat', methods=['POST'])
