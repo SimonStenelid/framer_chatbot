@@ -1,0 +1,458 @@
+### Natural Language → Complex Flight System
+
+Background
+
+Sharing a project I did during my position at Etraveli Group. 
+
+To give some high level background for you who are not in the deep flight industry. Most online travel agencies selling flight tickets source them using third party systems. A large portion of tickets come from a type of system called GDS-systems. Think of them like a mega large system filled with millions of flight tickets. To use them, they require their own very complex command language, which requires a lot of training. 
+
+The Problem
+
+This problem came to my mind during one meeting. A large organization, thousands of people, it's obvious that only a hand few of people will be really good at using the GDS-systems… 
+
+But what if, everyone could use these systems by just using natural language? More or less, very similar to vibe coding. Natural language —> a specific command language. 
+
+The Solution
+
+This comes to the solution, let's use a couple of AI agents, APIs and custom coded tools. Turned out to be a bit more complex compared to my previous builds, but I am always up for a challenge. 
+
+To explain the workflow:
+
+User inputs in Slack what they want to search for in the GDS system (e.g. "Find the lowest priced flight ticket from LON-NYC on December 11th")
+
+It give the message to the main "Orchestrator" agent, responsible for calling the right agents and make sure the workflow is working 
+
+The first "Query" agent gets the message, and uses a LMM model to reform the message to a correct API request format according to the GDS-systems documentation
+
+The query gets sent to the "GDS Connector" agent, an agent with a tool which can send API requests to a GDS-system. It has knowledge of all the different APIs and chooses the most relevant one to send the request to. 
+
+The agent retrieves an API response, which is usually in JSON-format an really hard to read. So for everyone in the company to understand it, its forwarded to the "Explainer" agent. 
+
+The "Explainer" agent has deep knowledge about GDS-systems, and uses an LLM model to create an explanation of the API response, and puts it in a clear and structured format. 
+
+The final answer is sent back to the "Orchestrator" which returns the output back to the user in Slack. 
+
+Some Conclusions
+
+Whilst the code for this AI system will remain private and in the ownership of the company, I can share with you some learnings from this project & want i enables. Well yes, as I intended, now everyone within the company, meaning from 30 to now —> thousands of people being able to use the complex GDS-systems. Your welcome :)
+
+First one being, nearly everything is possible today to do with AI agents. As long as you can build a custom function for what you want the agent to do — it can do it. 
+
+Secondly, AI agents are a lot more reliable when just given a single task or specialisation — think of it being an employee, specialised in one area. Thus this workflow have a total of 4 different agents, all working together as a team. 
+
+A single thought that came to my mind after building this. Image in the near future, it would not be totally impossible to build a whole company consisting of just a large network of AI agents. Every agent assigned a different role, and "manager" agents responsible for every agent working together as a team. Scary.... but also so interesting for what we can achieve. 
+
+
+### My AI Chatbot
+
+Soo…. recently I had a thought, what if I could turn myself into an AI? An AI that knows even more about me than myself… 
+
+Scary, I know, but it turned out not to be as difficult as I first thought — and soon I had a finished AI Agent that was surprisingly similar to myself. It knew a lot about me, how I was as a person, about my childhood, and even what my future plans were. 
+
+Then I wondered what if I can use this AI Agent to let people get to know me without even speaking to me?
+
+Introducing.. "My AI Chatbot" (perhaps I should have given it a better name). However, it turned out to be the perfect idea for my portfolio website. Potential clients, employers, people I have never met — could all suddenly interview me and get to know me, without me socialising. Love it. 
+
+How did I do it?
+
+As always I started off with some imports:
+
+from dotenv import load_dotenv
+from openai import OpenAI
+import json
+import os
+import requests
+from pypdf import PdfReader
+
+As you might know, I absolutely love the OpenAI SKD framework for building Agentic AI workflows. 
+
+Then I created 2 functions and wrapped them with the decorator @function_tool, to turn them into tools that the AI Agnet can use as it wishes. 
+
+First tool: Pushover, and application that lets you record and send notifications to yourself and your own phone! This allowed me to record all inputs users write, and sends we a message with their messages, so I can keep track of it. Yes.. I can see everything you ask me :p
+
+Second tool: a tool that loads in a bunch of pdf and txt. files about myself and gives it to the AI Agent. Simple, but it works incredibly well. So I downloaded my Linkedin as a pdf, that's my career. Then I wrote a bunch of texts about my childhood, how I am as a person, what I enjoy, and what my future plans are. 
+
+
+
+Now for the fun part, creating my AI Agent:
+
+    def chat(self, message, history):
+        messages = [{"role": "system", "content": self.system_prompt(
+        )}] + history + [{"role": "user", "content": message}]
+        done = False
+        while not done:
+            response = self.openai.chat.completions.create(
+                model="gpt-4o-mini", messages=messages, tools=pushover_tools)
+            if response.choices[0].finish_reason == "tool_calls":
+                message = response.choices[0].message
+                tool_calls = message.tool_calls
+                results = self.handle_tool_call(tool_calls)
+                messages.append(message)
+                messages.extend(results)
+            else:
+                done = True
+        return response.choices[0].message.content
+
+Add some instructions (system_prompt) for it to act as ME, and be kind and professional, in case someone important comes across this.
+
+And that's it! More or less. The agent is created and acts like a fully autonomous AI Agent, having access to some custom made tools by me. 
+
+
+
+Then I used a frontend by @muhammad-binsalman big thanks. I turned it into a flask web framework, and changed it to be just a complete full window of my AI chatbot, and removed some other UI components that I did not need. 
+
+All done!
+
+Now I am sharing all of this to you, so go on, create your own AI Chatbot and let people get to know you without even having to say "Hello".  [Repo]
+
+AI Agent (Main Hub)
+│
+├── User Input
+│   └── Question
+│
+├── Personal Data Sources
+│   ├── About Me
+│   ├── Childhood
+│   ├── Career
+│   ├── Future
+│   └── What I Like
+│
+├── External Integrations
+│   ├── LinkedIn
+│   │   └── Profile Data
+│   └── Phone Notifications
+│       └── Send Alerts
+│
+└── User Output
+    └── Response
+
+### Agentic AI for Campaign Image Generation
+
+One thing to add. I have a friend who works at a recently started local Korean restaurant. I really like their concept, so I catered this build to help them out with their marketing. I think it turned out amazing, and I am glad to help them succeed :)
+
+Soo…. recently I was thinking about how brands create campaign content. You know, those beautiful product photos you see everywhere — winter campaigns, summer vibes, holiday themes. And I realized... it's exhausting. You've got your raw product photos, and suddenly you need 4-5 different themed images that all look cohesive, professional, and on-brand.
+
+What if an AI could just... do that for me?
+
+A complex thought, I know. But nothing is impossible! — and soon I had a working AI workflow that could take a single product image and generate a complete campaign in minutes. It understood brand DNA, created themed variations, and even knew how to keep everything visually consistent.
+
+Then I wondered: what if brands could use this to speed up their entire creative process?
+
+Here you have it.. "Campaign AI Builder" (okay, also not the most creative name). But it turned out to be perfect for my portfolio. Imagine: upload a raw product photo, type "winter campaign, cozy vibes" — and boom, you get 4 professionally edited images ready to post. No manual editing. No design team. Just pure AI automation.
+
+Nice.
+
+How did I do it?
+
+1. I started off with some imports:
+
+from dotenv import load_dotenv
+import json
+import os
+import base64
+import asyncio
+import re
+import time
+import requests
+from pathlib import Path
+from agents import Agent, trace, Runner, function_tool, gen_trace_id
+from agents.model_settings import ModelSettings
+from openai.types.responses import ResponseInputImageParam, ResponseInputTextParam
+from openai.types.responses.response_input_item_param import Message
+
+As you might know, I absolutely love working with AI APIs and building agentic workflows. For this project, I used Wavespeed.ai with the bytedance/seedream-v4/edit model — it's perfect for image editing while keeping the product intact.
+
+2. Then I created the core functions:
+
+First up: The Brand DNA Loader
+
+Every brand has a style, right? Colors, vibes, aesthetic. I created a function that loads the brand guidelines (could be a JSON file or text document) so the AI knows what "on-brand" actually means.
+
+# Brand DNA loader function
+@function_tool
+def load_brand_dna(brand_dna_path: str = "Brand_DNA/brand_DNA.json") -> dict:
+    """
+    Load brand DNA guidelines from JSON file.
+
+    Args:
+        brand_dna_path: Path to the brand_DNA.json file
+
+    Returns:
+        Dictionary containing brand DNA guidelines
+
+    Raises:
+        FileNotFoundError: If the brand DNA file doesn't exist
+        json.JSONDecodeError: If the JSON file is malformed
+    """
+
+    if not os.path.exists(brand_dna_path):
+        raise FileNotFoundError(
+            f"Brand DNA file not found at: {brand_dna_path}")
+
+    with open(brand_dna_path, 'r', encoding='utf-8') as file:
+        brand_dna = json.load(file)
+
+    return brand_dna
+
+Second: The Prompt Generator Agent
+
+This is where the magic happens. I used OpenAI (because it's brilliant at understanding context and generating creative variations) to take the user's campaign prompt — like "winter campaign, fluffy snow" — and expand it into 4 completely different scene descriptions:
+
+Snowy mountain scene
+
+Cozy cabin interior
+
+Winter forest landscape
+
+Fireplace with warm lighting
+
+Each prompt is detailed, diverse, but still cohesive with the brand DNA.
+
+# AI Agent prompt generator
+
+INSTRUCTIONS = """You are an expert food photography prompt engineer specializing in Bap Kitchen's brand aesthetic.
+
+Your task: Generate 4 diverse scene prompts for photographing a Korean dish while maintaining strict brand consistency with Bap Kitchen's HEYTEA-inspired minimalist style rooted in natural materiality.
+
+INPUTS:
+1. Raw product images (the actual dish - DO NOT alter the food itself)
+2. Campaign brief
+3. Brand DNA (load using load_brand_dna tool)
+
+CRITICAL RULES:
+- Keep the dish EXACTLY as shown in the raw image..... # and so on
+
+Third: The Image Handler
+
+Need to convert that product image into something the API can work with? Base64, URLs, proper formatting — this function handles all of that.
+
+# Image processing function
+def load_product_images(product_folder: str = "Raw_products") -> list:
+  
+    if not os.path.exists(product_folder):
+        raise FileNotFoundError(
+            f"Product folder not found at: {product_folder}")
+
+    # Supported image formats
+    supported_formats = ('.jpg', '.jpeg', '.png', '.webp')
+
+    # Find all image files
+    image_files = [f for f in os.listdir(product_folder)
+                   if f.lower().endswith(supported_formats)]
+
+    if not image_files:
+        raise ValueError(f"No images found in folder: {product_folder}")
+
+    images_data = []
+
+    for image_file in image_files:
+        image_path = os.path.join(product_folder, image_file)
+
+        try:
+            # Read and encode image
+            with open(image_path, 'rb') as img_file:
+                image_bytes = img_file.read()
+                base64_image = base64.b64encode(image_bytes).decode('utf-8')
+
+            # Determine MIME type
+            extension = os.path.splitext(image_file)[1].lower()
+            mime_type = {
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.png': 'image/png',
+                '.webp': 'image/webp'
+            }.get(extension, 'image/jpeg')
+
+            # Store simplified data
+            image_data = {
+                "filename": image_file,
+                "base64_image": base64_image,
+                "mime_type": mime_type
+            }
+
+            images_data.append(image_data)
+
+        except Exception as e:
+            print(f"Warning: Failed to load image {image_file}: {e}")
+            continue
+
+    if not images_data:
+        raise ValueError(
+            f"Failed to load any images from folder: {product_folder}")
+
+    return images_data
+
+3. Now for the fun part — The Wavespeed API Integration:
+
+Here's where we actually generate the images. I created a batch request manager that sends 4 parallel requests to Wavespeed, each with:
+
+The original product image
+
+One of the 4 generated scene prompts
+
+The AI then edits the product into each scene while keeping it perfectly intact. No weird distortions, no losing the product details.
+
+# Wavespeed API batch processing
+ef generate_campaign_image(prompt: str, product_image_path: str, size: str = "2227*3183") -> dict:
+
+    API_KEY = os.getenv("WAVESPEED_API_KEY")
+    if not API_KEY:
+        raise ValueError(
+            "WAVESPEED_API_KEY not found in environment variables")
+
+    if not os.path.exists(product_image_path):
+        raise FileNotFoundError(
+            f"Product image not found at: {product_image_path}")
+
+    # Read and encode the product image
+    with open(product_image_path, 'rb') as img_file:
+        image_bytes = img_file.read()
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+
+    # Determine MIME type
+    extension = os.path.splitext(product_image_path)[1].lower()
+    mime_type = {
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.webp': 'image/webp'
+    }.get(extension, 'image/jpeg')
+
+    # Create data URL
+    image_data_url = f"data:{mime_type};base64,{base64_image}"
+
+    # Submit generation request
+    url = "https://api.wavespeed.ai/api/v3/bytedance/seedream-v4/edit"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}",
+    }
+    payload = {
+        "enable_base64_output": False,
+        "enable_sync_mode": False,
+        "images": [image_data_url],
+        "prompt": prompt,
+        "size": size
+    }
+
+    begin = time.time()
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+
+    if response.status_code != 200:
+        return {
+            "status": "failed",
+            "error": f"API Error: {response.status_code} - {response.text}",
+            "generation_time": time.time() - begin
+        }
+      [...]
+
+4. Gallery Organizer
+
+Once all 4 images come back, I collect them, name them logically (winter_scene_1.png, etc.), and organize them for easy download or display.
+
+# Gallery organization function
+```
+
+**5. That's it!** More or less. The workflow is fully automated and acts like a complete campaign production studio — taking seconds instead of hours.
+
+**6. Then I built a simple frontend** where users can:
+- Upload their raw product photo
+- Enter their campaign prompt ("spring collection, botanical vibes")
+- Click generate
+- Get back 4-5 campaign-ready images
+
+All done!
+
+## The Complete Workflow
+```
+User Input
+├── Raw Product Image (blank canvas)
+├── Campaign Prompt (e.g., "winter campaign, fluffy snow")
+└── Brand DNA Context
+    ↓
+AI Agent (Prompt Generator)
+├── Takes: Campaign Prompt + Brand DNA
+└── Outputs: 4 Different Scene Prompts
+    ├── Prompt 1: Snowy Mountain Scene
+    ├── Prompt 2: Cabin Interior
+    ├── Prompt 3: Winter Forest
+    └── Prompt 4: Cozy Fireplace
+        ↓
+Wavespeed API (Batch Requests)
+├── Request 1: Product Image + Prompt 1 → seedream-v4/edit
+├── Request 2: Product Image + Prompt 2 → seedream-v4/edit
+├── Request 3: Product Image + Prompt 3 → seedream-v4/edit
+└── Request 4: Product Image + Prompt 4 → seedream-v4/edit
+    ↓
+Generated Campaign Images (4x)
+    ↓
+Output Gallery
+└── Campaign Ready Content
+
+Now I'm sharing all of this with you, so go on, create your own AI-powered campaign builder and save yourself hours of manual editing. Your future self (and your design team) will thank you.
+
+P.S. — This took me about 2 days to build from scratch. If you're looking to add some real AI automation to your portfolio, this is a solid project that shows you can chain multiple AI tools together and solve actual business problems. Plus, it looks impressive as hell in demos.
+
+### Nova Shopping Assistant
+
+The Origin Story
+
+This is something that came into my mind after having a very bad customer experience from a gym. I was trying to cancel my membership. But apparently they had closed down their customer support email, and only had an "AI Support Chatbot" on their website. 
+
+This is where it all started. Because that AI chatbot was so incredibly bad, that it could not even answer the most basic questions! (and yes, I am still stuck with that membership)
+
+That led me on a pursuit for the next whole week, to build the ultimate Support Chatbot powered by AI… 
+
+Problem
+
+So the problem with most support chatbots are that they are pretty dumb, or limited in what they can do. They are also usually very expensive for companies to implement from an ai agency and so on. 
+
+I wanted to create an AI Shopping Assistant for a Shopify E-commerce store, that could access all of the store's product and inventory data. I also wanted it to be able to give some guidance to the customers:
+
+Styling tips - what products match together
+
+Gift recommendations - give me 5 gift ideas for my mom (uses only the Shopify products)
+
+Wash guidance - how do I best wash "X" product?
+
+FAQ - how to I make a return? When to I get my order?
+
+The Solution
+
+I built a clean and simple AI workflow using n8n. Simple as it should be, to complex and agentic ai frameworks collapse or take to long time. 
+
+This workflow:
+
+Triggers by a webhook (the AI chatbot interface on the Shopify store)
+
+Gives the user's input to an AI Agent
+
+The AI Aagent has access to 3 tools: AI LLM Model, Shopify API, Vector database
+
+The AI agent chooses the most relevant tools to call and how to use them, it follows its own instructions, but have full freedom to decide its work progress. 
+
+The AI agent then returns a clean structured output and sends it back, and the user sees the answer back in the chat. 
+
+Simple!
+
+So…
+
+What is your return policy? 
+
+Input —> AI Agent —> calls Vector database (with all FAQs, policies, company info etc.) —> gives the vector data to OpenAI LLM model —> generates a clean response —> sends it back to the user.
+
+Do you have any jackets?
+
+Input —> AI Agent —> Shopify API app —> searches for any products in category "Jackets" —> collects 3-5 products —> LLM to summarize data —> sends back a clean response with product names, prices, sizes, and descriptions.
+
+Summary
+
+What did I achieve then? 
+
+Well I created an complete AI Shopping Assistant - Nova. 
+
+That can answer nearly all customer questions and actually be helpful, instead of answering "Sorry I can't help with that". It can fetch real product data in seconds. Its adaptable to any e-commerce store, just change the vector database and the system_prompt for the agent. 
+
+Taaa da! — You now can have your own shopping assistant in your store!
+
+If you are interested in implementing something like this for your store, send me a message! Let's book a quick call and get an quick offer. 
